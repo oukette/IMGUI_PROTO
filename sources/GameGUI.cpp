@@ -1,9 +1,9 @@
 #include "GameGUI.h"
 
-GameGUI::GameGUI(std::unique_ptr<sf::RenderWindow>& window) : 
-    m_window(window.get()),
+GameGUI::GameGUI(sf::RenderWindow& window) : 
+    m_window(window),
     m_currentState(MenuState::MENU_MAIN),
-    m_windowSize(window->getSize())
+    m_windowSize(window.getSize())
 {
     setStyle();
 
@@ -31,20 +31,20 @@ void GameGUI::applyResolution()
         sf::VideoMode newMode = m_resolutions_list[m_resolutionIndex];
         if (m_isFullscreen)
         {
-            m_window->create(newMode, "Game", sf::Style::Fullscreen);
+            m_window.create(newMode, "Game", sf::Style::Fullscreen);
         }
         else
         {
-            m_window->create(newMode, "Game", sf::Style::Default);
+            m_window.create(newMode, "Game", sf::Style::Default);
 
             // Center the window on the screen
             sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
-            m_window->setPosition(sf::Vector2i(
+            m_window.setPosition(sf::Vector2i(
                 (desktopMode.width - newMode.width) / 2,
                 (desktopMode.height - newMode.height) / 2));
         }
         // Update ImGui SFML
-        ImGui::SFML::SetCurrentWindow(*m_window);
+        ImGui::SFML::SetCurrentWindow(m_window);
     }
 }
 
@@ -53,13 +53,13 @@ void GameGUI::applyFrameRateCap()
     switch (m_selectedFrameRateOption)
     {
         case FrameRateOption::FPS_UNCAPPED:
-            m_window->setFramerateLimit(0);
+            m_window.setFramerateLimit(0);
             break;
         case FrameRateOption::FPS_CUSTOM:
-            m_window->setFramerateLimit(m_customFrameRate);
+            m_window.setFramerateLimit(m_customFrameRate);
             break;
         default:
-            m_window->setFramerateLimit(std::stoi(m_frameRateOptions[static_cast<int>(m_selectedFrameRateOption)]));
+            m_window.setFramerateLimit(std::stoi(m_frameRateOptions[static_cast<int>(m_selectedFrameRateOption)]));
             break;
     }
 }
@@ -80,7 +80,7 @@ void GameGUI::handleEvent(sf::Event &event)
     if (event.type == sf::Event::Resized)
     {
         sf::FloatRect visibleArea(0, 0, event.size.width, event.size.height);
-        m_window->setView(sf::View(visibleArea));
+        m_window.setView(sf::View(visibleArea));
         m_windowSize = sf::Vector2u(event.size.width, event.size.height);
         ImGui::SFML::UpdateFontTexture(); // Update ImGui font texture
     }
@@ -128,8 +128,8 @@ void GameGUI::handleEvent(sf::Event &event)
 void GameGUI::update()
 {
     ensureImGuiContext();
-    m_windowSize = m_window->getSize();
-    ImGui::SFML::Update(*m_window, sf::seconds(1.f / 60.f));
+    m_windowSize = m_window.getSize();
+    ImGui::SFML::Update(m_window, sf::seconds(1.f / 60.f));
 
     switch (m_currentState)
     {
@@ -157,7 +157,7 @@ void GameGUI::update()
 void GameGUI::render()
 {
     ensureImGuiContext();
-    ImGui::SFML::Render(*m_window);
+    ImGui::SFML::Render(m_window);
 }
 
 
@@ -185,35 +185,35 @@ void GameGUI::processFullscreenToggle()
     std::cout << "Toggling fullscreen. New state: " << (m_isFullscreen ? "Fullscreen" : "Windowed") << std::endl;
 
     // SAVE the current view settings before changing the window
-    sf::View currentView = m_window->getView();
+    sf::View currentView = m_window.getView();
 
     // SHUTDOWN ImGui before recreating the window
     ImGui::SFML::Shutdown(); 
 
     if (m_isFullscreen)
     {
-        m_windowedSize = m_window->getSize();
+        m_windowedSize = m_window.getSize();
         std::cout << "Stored windowed size: " << m_windowedSize.x << "x" << m_windowedSize.y << std::endl;
-        m_window->create(desktopMode, "Game Title", sf::Style::Fullscreen);
+        m_window.create(desktopMode, "Game Title", sf::Style::Fullscreen);
     }
     else
     {
-        m_window->create(sf::VideoMode(m_windowedSize.x, m_windowedSize.y), "Game Title", sf::Style::Default);
+        m_window.create(sf::VideoMode(m_windowedSize.x, m_windowedSize.y), "Game Title", sf::Style::Default);
         sf::Vector2i windowPosition(
             (desktopMode.width - m_windowedSize.x) / 2,
             (desktopMode.height - m_windowedSize.y) / 2);
-        m_window->setPosition(windowPosition);
+        m_window.setPosition(windowPosition);
     }
 
-    if (!ImGui::SFML::Init(*m_window))
+    if (!ImGui::SFML::Init(m_window))
     {
         std::cerr << "Failed to initialize ImGui-SFML after toggling fullscreen" << std::endl;
     }
 
     // RESTORE the previous view settings
-    m_window->setView(currentView);
+    m_window.setView(currentView);
 
-    std::cout << "New window size: " << m_window->getSize().x << "x" << m_window->getSize().y << std::endl;
+    std::cout << "New window size: " << m_window.getSize().x << "x" << m_window.getSize().y << std::endl;
 
     setStyle();
 }
@@ -347,7 +347,7 @@ void GameGUI::optionsMenu()
     ImGui::Text("Vertical Sync");
     if (ImGui::Checkbox("##vsync", &m_vsync))
     {
-        m_window->setVerticalSyncEnabled(m_vsync);
+        m_window.setVerticalSyncEnabled(m_vsync);
     }
 
     // AUDIO
@@ -404,7 +404,7 @@ void GameGUI::quitMenu()
     ImGui::SameLine();
     if (ImGui::Button("YES", ImVec2(BUTTON_WIDTH/2, BUTTON_HEIGHT)))
     {
-        m_window->close();
+        m_window.close();
     }
 
     ImGui::End();
@@ -521,7 +521,7 @@ void GameGUI::ensureImGuiContext()
     if (!ImGui::GetCurrentContext())
     {
         std::cerr << "ImGui context is null, reinitializing..." << std::endl;
-        if (!ImGui::SFML::Init(*m_window))
+        if (!ImGui::SFML::Init(m_window))
         {
             std::cerr << "Failed to reinitialize ImGui-SFML" << std::endl;
             // Consider throwing an exception or handling this error appropriately

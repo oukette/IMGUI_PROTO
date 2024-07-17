@@ -8,11 +8,11 @@ int main()
 {
     try
     {
-        auto window = std::make_unique<sf::RenderWindow>(sf::VideoMode(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT), 
+        auto window = sf::RenderWindow(sf::VideoMode(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT), 
                                                         "Game", 
                                                         sf::Style::Default);
-        window->setFramerateLimit(60);
-        if (!ImGui::SFML::Init(*window))
+        window.setFramerateLimit(60);
+        if (!ImGui::SFML::Init(window))
         {
             throw std::runtime_error("Failed to initialize ImGui-SFML");
         }
@@ -21,25 +21,25 @@ int main()
 
         sf::Clock deltaClock;
 
-        while (window->isOpen())
+        while (window.isOpen())
         {
             sf::Event event;
-            while (window->pollEvent(event))
+            while (window.pollEvent(event))
             {
                 gui.handleEvent(event);
                 if (event.type == sf::Event::Closed)
                 {
-                    window->close();
+                    window.close();
                 }
             }
             // PROCESS the fullscreen toggle request
             gui.processFullscreenToggle();
 
-            window->clear();
+            window.clear();
             gui.update();
 
             gui.render();
-            window->display();
+            window.display();
         }
 
         ImGui::SFML::Shutdown();

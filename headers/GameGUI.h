@@ -37,7 +37,7 @@ enum class FrameRateOption
 class GameGUI
 {
 private:
-    sf::RenderWindow *m_window;
+    sf::RenderWindow &m_window;
     MenuState m_currentState;
     sf::Vector2u m_windowSize;
 
@@ -75,7 +75,7 @@ private:
     void ensureImGuiContext();
 
 public:
-    GameGUI(std::unique_ptr<sf::RenderWindow>& window);
+    GameGUI(sf::RenderWindow& window);
     void setStyle();
     void handleEvent(sf::Event &event);
     void update();
